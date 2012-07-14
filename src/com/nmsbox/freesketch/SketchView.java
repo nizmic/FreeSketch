@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -14,8 +15,10 @@ public class SketchView extends SurfaceView implements SurfaceHolder.Callback {
 	private static final String TAG = "SketchView";
 	private static final float TOUCH_SCALE_FACTOR = 180.0f / 320;
 	private static final int BACKGROUND_COLOR = Color.WHITE;
+	private static final long STROKE_TIMEOUT_MILLIS = 200;
 	private float mPrevX;
 	private float mPrevY;
+	private long mPrevTime;
 	private Bitmap mBitmap;
 	private Paint mPaint;
 	
@@ -27,6 +30,8 @@ public class SketchView extends SurfaceView implements SurfaceHolder.Callback {
 		mPaint.setAntiAlias(true);
 		mPaint.setColor(Color.RED);
 		mPaint.setStrokeWidth(5.0f);
+		mPaint.setStyle(Paint.Style.STROKE);
+		mPrevTime = 0;
 	}
 	
 	private void doDraw(Canvas canvas) {
@@ -42,30 +47,57 @@ public class SketchView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		switch (e.getAction()) {
 		case MotionEvent.ACTION_MOVE:
-			Log.i(TAG, String.format("ACTION_MOVE (x,y)=(%f,%f)", x, y));
-			float dx = x - mPrevX;
-            float dy = y - mPrevY;
+			long time = e.getEventTime();
 
-            // reverse direction of rotation above the mid-line
-            if (y > getHeight() / 2) {
-              dx = dx * -1 ;
-            }
+			Path path = new Path();
+			boolean firstPoint = true;
+			
+			// Continue current stroke if last motion event was less than STROKE_TIMEOUT_MILLIS ago
+			if (time - mPrevTime < STROKE_TIMEOUT_MILLIS) {
+				Log.i(TAG, String.format("continuing previous stroke"));
+				path.moveTo(mPrevX, mPrevY);
+				firstPoint = false;
+			}
+			
+			final int historySize = e.getHistorySize();
+			final int pointerCount = e.getPointerCount();
+			for (int h = 0; h < historySize; h++) {
+				for (int p = 0; p < pointerCount; p++) {
+					float histX = e.getHistoricalX(p, h);
+					float histY = e.getHistoricalY(p, h);
+					if (firstPoint) {
+						path.moveTo(histX, histY);
+						firstPoint = false;
+					} else {
+						path.lineTo(histX, histY);
+					}
+				}
+			}
 
-            // reverse direction of rotation to left of the mid-line
-            if (x < getWidth() / 2) {
-              dy = dy * -1 ;
-            }
-
-            //mRenderer.mAngle += (dx + dy) * TOUCH_SCALE_FACTOR;
+			if (firstPoint) {
+				path.moveTo(x, y);
+			}
+			path.lineTo(x, y);
+			
             if (mBitmap != null) {
             	Canvas canvas = new Canvas(mBitmap);
-            	canvas.drawPoint(x, y, mPaint);
+           		canvas.drawPath(path, mPaint);
+            	/*Paint p = new Paint();
+            	p.setColor(Color.BLACK);
+            	p.setStrokeWidth(10.0f);
+            	p.setAntiAlias(true);
+            	canvas.drawPoint(x, y, p);
+            	p.setColor(Color.GREEN);
+            	canvas.drawPoint(mPrevX, mPrevY, p);*/
             	canvas = getHolder().lockCanvas();
             	if (canvas != null) {
             		doDraw(canvas);
             		getHolder().unlockCanvasAndPost(canvas);
             	}
             }
+            mPrevX = x;
+            mPrevY = y;
+            mPrevTime = time;
 		}
 		return true;
 	}
