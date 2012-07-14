@@ -1,17 +1,17 @@
 package com.nmsbox.freesketch;
 
-import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.support.v4.app.NavUtils;
 
 public class SketchActivity extends Activity {
-	private GLSurfaceView mGLView;
+	private SurfaceView mGLView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
