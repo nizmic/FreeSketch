@@ -20,34 +20,23 @@ package com.nmsbox.freesketch;
 
 import android.os.Bundle;
 import android.app.Activity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.SurfaceView;
-import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.support.v4.app.NavUtils;
 
-public class SketchActivity extends Activity {
-	private static final String TAG = "SketchActivity";
-	private SurfaceView mView;
-	
+public class SettingsActivity extends Activity {
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_sketch);
-        
-        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        mView = new SketchView(this);
-        mView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        setContentView(mView);
+        setContentView(R.layout.activity_settings);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.activity_sketch, menu);
+        getMenuInflater().inflate(R.menu.activity_settings, menu);
         return true;
     }
+
+    
 }

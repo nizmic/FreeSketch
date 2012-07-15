@@ -18,7 +18,9 @@
 
 package com.nmsbox.freesketch;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -28,17 +30,19 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 
 public class SketchView extends SurfaceView implements SurfaceHolder.Callback {
 	private static final String TAG = "SketchView";
-	private static final float TOUCH_SCALE_FACTOR = 180.0f / 320;
 	private static final int BACKGROUND_COLOR = Color.WHITE;
-	private static final long STROKE_TIMEOUT_MILLIS = 200;
+	private static final long STROKE_TIMEOUT_MILLIS = 100;
+	private static final int SETTINGS_REQUEST = 0;
 	private float mPrevX;
 	private float mPrevY;
 	private long mPrevTime;
 	private Bitmap mBitmap;
 	private Paint mPaint;
+	private boolean mEnableTripleTouch;
 	
 	public SketchView(Context context) {
 		super(context);
@@ -50,6 +54,7 @@ public class SketchView extends SurfaceView implements SurfaceHolder.Callback {
 		mPaint.setStrokeWidth(5.0f);
 		mPaint.setStyle(Paint.Style.STROKE);
 		mPrevTime = 0;
+		mEnableTripleTouch = true;
 	}
 	
 	private void doDraw(Canvas canvas) {
@@ -58,27 +63,46 @@ public class SketchView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 	}
 	
+	public void showSettings(View view) {
+    	Intent intent = new Intent(this.getContext(), SettingsActivity.class);
+    	this.getContext().startActivity(intent);
+    }
+	
+	@Override
+	protected void onVisibilityChanged (View changedView, int visibility) {
+		if (visibility == View.VISIBLE) {
+			mEnableTripleTouch = true;
+		}
+	}
+		
 	@Override
 	public boolean onTouchEvent(MotionEvent e) {
-		float x = e.getX();
-		float y = e.getY();
+		final float x = e.getX();
+		final float y = e.getY();
+		final int historySize = e.getHistorySize();
+		final int pointerCount = e.getPointerCount(); // this is essentially the number of fingers/touches
+		
+		if (pointerCount == 3 && mEnableTripleTouch) {
+			mEnableTripleTouch = false;
+			showSettings(this);
+			return true;
+		}
 		
 		switch (e.getAction()) {
 		case MotionEvent.ACTION_MOVE:
+			if (pointerCount > 1) {
+				return true;
+			}
 			long time = e.getEventTime();
-
 			Path path = new Path();
 			boolean firstPoint = true;
 			
 			// Continue current stroke if last motion event was less than STROKE_TIMEOUT_MILLIS ago
 			if (time - mPrevTime < STROKE_TIMEOUT_MILLIS) {
-				Log.i(TAG, String.format("continuing previous stroke"));
 				path.moveTo(mPrevX, mPrevY);
 				firstPoint = false;
 			}
 			
-			final int historySize = e.getHistorySize();
-			final int pointerCount = e.getPointerCount();
 			for (int h = 0; h < historySize; h++) {
 				for (int p = 0; p < pointerCount; p++) {
 					float histX = e.getHistoricalX(p, h);
@@ -116,6 +140,7 @@ public class SketchView extends SurfaceView implements SurfaceHolder.Callback {
             mPrevX = x;
             mPrevY = y;
             mPrevTime = time;
+            break;
 		}
 		return true;
 	}
