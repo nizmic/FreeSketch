@@ -20,16 +20,34 @@ package com.nmsbox.freesketch;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.Window;
+import android.widget.Button;
 import android.support.v4.app.NavUtils;
+import android.support.v7.widget.GridLayout;
 
-public class SettingsActivity extends Activity {
+public class SettingsActivity extends Activity implements OnClickListener {
+	private static final String TAG = "SettingsActivity";
+	
+	//private GridLayout mButtonGrid;
+	private Button mClearButton;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_settings);
+        mClearButton = (Button)findViewById(R.id.clearButton);
+        mClearButton.setOnClickListener(this);
+    }
+    
+    @Override
+    protected void onStart() {
+    	super.onStart();
     }
 
     @Override
@@ -37,6 +55,11 @@ public class SettingsActivity extends Activity {
         getMenuInflater().inflate(R.menu.activity_settings, menu);
         return true;
     }
+
+	@Override
+	public void onClick(View v) {
+		Log.i(TAG, "onClick");
+	}
 
     
 }
